@@ -4,6 +4,7 @@
             <div class="col-md-6">
                 <div class="card shadow mb-4">
                     <div class="card-body">
+						 <input type="hidden" v-model="product_id">
                         <div class="form-group">
                             <label for="">Product Name</label>
                             <input type="text" v-model="product_name"  placeholder="Product Name" class="form-control">
@@ -40,7 +41,7 @@
                                 <div class="form-group">
                                     <label for="">Option</label>
                                     <select v-model="item.option" class="form-control">
-                                        <option v-for="variant in variants"
+                                        <option v-for="variant in passeddata.variants"
                                                 :value="variant.id">
                                             {{ variant.title }}
                                         </option>
@@ -58,7 +59,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer" v-if="product_variant.length < variants.length && product_variant.length < 3">
+                    <div class="card-footer" v-if="product_variant.length < passeddata.variants.length && product_variant.length < 3">
                         <button @click="newVariant" class="btn btn-primary">Add another option</button>
                     </div>
 
@@ -106,17 +107,18 @@ export default {
         vueDropzone: vue2Dropzone,
         InputTag
     },
-    props: ['variants'],
+    props: ['passeddata','variants'],
     data() {
         return {
+            product_id: '',
             product_name: '',
             product_sku: '',
             description: '',
             images: [],
             product_variant: [
                 {
-                    option: this.variants[0].id,
-                    tags: []
+                    option:'',
+                    tags: ['g']
                 }
             ],
             product_variant_prices: [],
@@ -130,10 +132,13 @@ export default {
             }
         }
     },
+	cretaed(){
+	
+	},
     methods: {
         // it will push a new object into product variant
         newVariant() {
-            let all_variants = this.variants.map(el => el.id)
+            let all_variants = this.passeddata.variants.map(el => el.id)
             let selected_variants = this.product_variant.map(el => el.option);
             let available_variants = all_variants.filter(entry1 => !selected_variants.some(entry2 => entry1 == entry2))
             // console.log(available_variants)
@@ -151,7 +156,7 @@ export default {
             this.product_variant.filter((item) => {
                 tags.push(item.tags);
             })
-
+			/*
             this.getCombn(tags).forEach(item => {
                 this.product_variant_prices.push({
                     title: item,
@@ -159,6 +164,7 @@ export default {
                     stock: 0
                 })
             })
+			*/
         },
 
         // combination algorithm
@@ -177,6 +183,7 @@ export default {
         // store product into database
         saveProduct() {
             let product = {
+                product_id: this.product_id,
                 title: this.product_name,
                 sku: this.product_sku,
                 description: this.description,
@@ -190,7 +197,7 @@ export default {
                 console.log(response.data);
 				var data = response.data;
 				if(data.success){
-					alert('Congratulations!Product succesfully saved');
+					alert('Congratulations!Product succesfully Updated');
 					window.location.href=data.redirect
 				}
             }).catch(error => {
@@ -211,10 +218,34 @@ export default {
                 console.log(error);
             })
             console.log(product);
-        }
+        },
+		setProduct(){
+			
+		}
     },
     mounted() {
-		console.log(this.pid)
+		console.log(this.passeddata.products)
+		this.product_id=this.passeddata.products.id
+		this.product_name=this.passeddata.products.title
+		this.product_sku=this.passeddata.products.sku
+		this.description=this.passeddata.products.description
+		this.product_variant=[];
+		for(var varinttags in this.passeddata.products.varinttags){
+			var singleV = this.passeddata.products.varinttags[varinttags];
+			this.product_variant.push({
+                option: singleV.option,
+                tags: singleV.tags
+            })
+		}
+		for(var pricecombine in this.passeddata.products.pricecombine){
+			var singleP = this.passeddata.products.pricecombine[pricecombine];
+			this.product_variant_prices.push({
+				title: singleP.tag_combine,
+				price: singleP.price,
+				stock: singleP.stock
+			})
+		}
+		//this.product_variant=this.passeddata.products.description
         console.log('Component mounted.')
     }
 }
